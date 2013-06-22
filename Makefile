@@ -10,6 +10,7 @@ clean: cleanCodeCppUTest
 
 codeCppUTest: CppUTest CppUTestExt
 	make -i -f MakefileCppUTest.mk 
+	@echo "test"
 
 cleanCodeCppUTest:
 #	make -i -f MakefileCppUTest.mk clean
