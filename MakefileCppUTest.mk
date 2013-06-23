@@ -25,7 +25,7 @@ CPPUTEST_LIB_DIR = ./lib
 #	src/zune \
 
 SRC_FILES =\
-	src/IO/Flash.c\
+	src/LightSchedule/LightSchedule.c\
 #SRC_DIRS:=$(shell find ./ -name "*.c" -a ! -name "IO.c")
 
 #TEST_SRC_DIRS = \
@@ -43,8 +43,7 @@ SRC_FILES =\
 #	tests/MyOS\
 
 TEST_SRC_FILES = \
-	mocks/IO/MockIO.cpp\
-	tests/IO/FlashTest.cpp\
+	tests/LightSchedule/LightScheduleTest.cpp\
 	tests/AllTests.cpp\
 	
 	
