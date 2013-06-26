@@ -25,7 +25,8 @@ CPPUTEST_LIB_DIR = ./lib
 #	src/zune \
 
 SRC_FILES =\
-	src/LightSchedule/LightSchedule.c\
+	src/LightSchedule/LightSchedule.c \
+	
 #SRC_DIRS:=$(shell find ./ -name "*.c" -a ! -name "IO.c")
 
 #TEST_SRC_DIRS = \
@@ -43,7 +44,10 @@ SRC_FILES =\
 #	tests/MyOS\
 
 TEST_SRC_FILES = \
-	tests/LightSchedule/LightScheduleTest.cpp\
+	tests/LightSchedule/LightScheduleTest.cpp \
+	tests/HomeAutomation/LightControllerSpy.c \
+	tests/HomeAutomation/FakeTimeService.c \
+	tests/HomeAutomation/FakeTimeServiceTest.cpp \
 	tests/AllTests.cpp\
 	
 	
@@ -59,6 +63,7 @@ INCLUDE_DIRS =\
   include/MyOS\
   include/dvr\
   include/zune\
+  tests\
 
 MOCKS_SRC_DIRS = \
 	mocks\
