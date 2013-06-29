@@ -8,8 +8,10 @@
 #ifndef TIMESERVICE_H_
 #define TIMESERVICE_H_
 
-enum { EVERYDAY = -1, WEEKEND = -2, WEEKDAY = -3,
+enum Day { EVERYDAY = -1, WEEKEND = -2, WEEKDAY = -3,
     SUNDAY = 0, MONDAY, TUESDAY, WEDNESDAY, THURSDAY, FRIDAY, SATURDAY };
+
+typedef enum Day Day;
 
 int getMinuteOfDay(void);
 int getDayOfWeek(void);

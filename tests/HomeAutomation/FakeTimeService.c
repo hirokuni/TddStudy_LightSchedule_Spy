@@ -13,7 +13,7 @@ void FakeTimeService_Destroy(void)
 {
 }
 
-void FakeTimeService_SetDay(int day){
+void FakeTimeService_SetDay(Day day){
 dayOfWeek = day;
 }
 
