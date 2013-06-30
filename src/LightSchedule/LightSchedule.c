@@ -22,9 +22,13 @@ void LightSchedule_Create(void) {
 void LightSchedule_Destroy(void) {
 }
 
-void LightScheduler_Wakeup(void) {
+/*
+ * この関数は条件に従って単独イベントをトリガーする債務がある。複数イベントをサポートするときには、
+ * この関数はループから呼び出せばよい。（呼び出すループ内にこの関数のロジックをいれると
+ * ループが長くなって見づらい関数になってしまう）
+ */
+static void processEventDueNow(ScheduleEvent* lightEvent) {
 	int minuteOfDay = -1;
-
 	minuteOfDay = getMinuteOfDay();
 
 	if (scheduleEvent.id == UNUSED)
@@ -43,6 +47,15 @@ void LightScheduler_Wakeup(void) {
 }
 
 /*
+ * LightScheduler_Wakeupは周期的なコールバック関数としてTimeServiceに登録される関数になる。
+ * 今のところは単独エベントしか処理しないが、あおtでスケジュールイベントのコレクションに含まれる各
+ * イベントを処理するようになる。
+ */
+void LightScheduler_Wakeup(void) {
+	processEventDueNow(&scheduleEvent);
+}
+
+/*
  * setScheduleEventを公開しない理由は、パラメータのリストが既に長かったため。
  * 公開するとクライアントのコードの負担が増えるから。ここの関数を列挙する方が
  * コードの意図がわかりやすく安全である。
@@ -55,9 +68,9 @@ static void setScheduleEvent(int id, Day day, int minuteOfDay, int event) {
 }
 
 void LightScheduler_ScheduleTurnOn(int id, Day day, int minuteOfDay) {
-	setScheduleEvent(id,day,minuteOfDay,TURN_ON);
+	setScheduleEvent(id, day, minuteOfDay, TURN_ON);
 }
 
 void LightScheduler_ScheduleTurnOff(int id, Day day, int minuteOfDay) {
-	setScheduleEvent(id,day,minuteOfDay,TURN_OFF);
+	setScheduleEvent(id, day, minuteOfDay, TURN_OFF);
 }
