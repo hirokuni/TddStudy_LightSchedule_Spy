@@ -1,5 +1,7 @@
 #include "LightSchedule.h"
 #include "LightController.h"
+#define TRUE 1
+#define FALSE 0
 
 typedef struct {
 	int id;
@@ -22,6 +24,24 @@ void LightSchedule_Create(void) {
 void LightSchedule_Destroy(void) {
 }
 
+static int DoesLightRespondToday(int reactionDay) {
+	int today = getDayOfWeek();
+
+	if (reactionDay == EVERYDAY)
+		return TRUE;
+
+	if(reactionDay == today)
+			return TRUE;
+
+	if (reactionDay == WEEKEND && (SATURDAY == today || SUNDAY == today))
+		return TRUE;
+
+	if (reactionDay == WEEKDAY && today >= MONDAY && today <= FRIDAY)
+		return TRUE;
+
+	return FALSE;
+}
+
 /*
  * この関数は条件に従って単独イベントをトリガーする債務がある。複数イベントをサポートするときには、
  * この関数はループから呼び出せばよい。（呼び出すループ内にこの関数のロジックをいれると
@@ -32,6 +52,9 @@ static void processEventDueNow(ScheduleEvent* lightEvent) {
 	minuteOfDay = getMinuteOfDay();
 
 	if (scheduleEvent.id == UNUSED)
+		return;
+
+	if(!DoesLightRespondToday(scheduleEvent.day))
 		return;
 
 	if (minuteOfDay != scheduleEvent.minuteOfDay)
