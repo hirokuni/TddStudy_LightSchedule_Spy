@@ -196,3 +196,21 @@ TEST(LightSchedule, ScheduleWeekEndItsMonday) {
 
 	checkLightState(LIGHT_ID_UNKNOWN,LIGHT_STATE_UNKNOWN);
 }
+
+/*
+ * 初期化とクリーンナップのテストは、他のLightSchedulerの手嘘とはかなり違っているので
+ * 新しくTEST_GROUPを追加した。
+ */
+TEST_GROUP(LightSchedulerInitAndCleanup)
+{
+
+};
+
+TEST(LightSchedulerInitAndCleanup, CreateStartsOneMinuteAlarm)
+{
+	LightSchedule_Create();
+	POINTERS_EQUAL((void *)LightScheduler_Wakeup,
+			(void *)FakeTimeService_GetAlarmCallback());
+	LONGS_EQUAL(60,FakeTimeService_GetAlarmPeriod());
+	LightSchedule_Destroy();
+}

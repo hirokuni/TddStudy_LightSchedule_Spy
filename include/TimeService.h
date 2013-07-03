@@ -13,7 +13,12 @@ enum Day { EVERYDAY = -1, WEEKEND = -2, WEEKDAY = -3,
 
 typedef enum Day Day;
 
+typedef void (*WakeupCallback)(void);
+
 int getMinuteOfDay(void);
 int getDayOfWeek(void);
+void TimeService_SetPeriodicAlarmInSeconds(int sec,  WakeupCallback);
+void TimeService_CancelPeriodicAlarmInSeconds(int seconds, WakeupCallback);
+
 
 #endif /* TIMESERVICE_H_ */

@@ -19,9 +19,11 @@ enum {
 void LightSchedule_Create(void) {
 	scheduleEvent.id = UNUSED;
 	scheduleEvent.event = LIGHT_COMMAND_INITIAL_VAL;
+	TimeService_SetPeriodicAlarmInSeconds(60,LightScheduler_Wakeup);
 }
 
 void LightSchedule_Destroy(void) {
+	TimeService_CancelPeriodicAlarmInSeconds(60, LightScheduler_Wakeup);
 }
 
 static int DoesLightRespondToday(int reactionDay) {
