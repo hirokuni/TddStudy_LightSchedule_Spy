@@ -10,16 +10,25 @@ typedef struct {
 	int event;
 } ScheduleEvent;
 
+#define MAX_EVENTS 128
+
 ScheduleEvent scheduleEvent;
+ScheduleEvent scheduleEvents[MAX_EVENTS];
 
 static int UNUSED = -1;
 enum {
 	LIGHT_COMMAND_INITIAL_VAL = -1, TURN_ON = 0, TURN_OFF
 };
 void LightSchedule_Create(void) {
+	int i = 0;
 	scheduleEvent.id = UNUSED;
 	scheduleEvent.event = LIGHT_COMMAND_INITIAL_VAL;
-	TimeService_SetPeriodicAlarmInSeconds(60,LightScheduler_Wakeup);
+
+	for (i = 0; i < MAX_EVENTS; i++) {
+		scheduleEvents[i].id = UNUSED;
+	}
+
+	TimeService_SetPeriodicAlarmInSeconds(60, LightScheduler_Wakeup);
 }
 
 void LightSchedule_Destroy(void) {
@@ -32,8 +41,8 @@ static int DoesLightRespondToday(int reactionDay) {
 	if (reactionDay == EVERYDAY)
 		return TRUE;
 
-	if(reactionDay == today)
-			return TRUE;
+	if (reactionDay == today)
+		return TRUE;
 
 	if (reactionDay == WEEKEND && (SATURDAY == today || SUNDAY == today))
 		return TRUE;
@@ -53,19 +62,19 @@ static void processEventDueNow(ScheduleEvent* lightEvent) {
 	int minuteOfDay = -1;
 	minuteOfDay = getMinuteOfDay();
 
-	if (scheduleEvent.id == UNUSED)
+	if (lightEvent->id == UNUSED)
 		return;
 
-	if(!DoesLightRespondToday(scheduleEvent.day))
+	if (!DoesLightRespondToday(lightEvent->day))
 		return;
 
-	if (minuteOfDay != scheduleEvent.minuteOfDay)
+	if (minuteOfDay != lightEvent->minuteOfDay)
 		return;
 
-	if (scheduleEvent.event == TURN_ON) {
-		LightController_On(scheduleEvent.id);
-	} else if (scheduleEvent.event == TURN_OFF) {
-		LightController_Off(scheduleEvent.id);
+	if (lightEvent->event == TURN_ON) {
+		LightController_On(lightEvent->id);
+	} else if (lightEvent->event == TURN_OFF) {
+		LightController_Off(lightEvent->id);
 	} else {
 		return;
 	}
@@ -77,6 +86,10 @@ static void processEventDueNow(ScheduleEvent* lightEvent) {
  * イベントを処理するようになる。
  */
 void LightScheduler_Wakeup(void) {
+	int i;
+	for (i = 0; i < MAX_EVENTS; i++)
+		processEventDueNow(&scheduleEvents[i]);
+
 	processEventDueNow(&scheduleEvent);
 }
 
@@ -85,17 +98,42 @@ void LightScheduler_Wakeup(void) {
  * 公開するとクライアントのコードの負担が増えるから。ここの関数を列挙する方が
  * コードの意図がわかりやすく安全である。
  */
-static void setScheduleEvent(int id, Day day, int minuteOfDay, int event) {
-	scheduleEvent.id = id;
-	scheduleEvent.day = day;
-	scheduleEvent.minuteOfDay = minuteOfDay;
-	scheduleEvent.event = event;
+static LightScheduleResult setScheduleEvent(int id, Day day, int minuteOfDay,
+		int event) {
+	int i;
+
+	if (id < 0 || id > 31)
+		return LS_ID_OUT_OF_BOUNDS;
+
+	for (i = 0; i < MAX_EVENTS; i++) {
+		if (scheduleEvents[i].id == UNUSED) {
+			scheduleEvents[i].id = id;
+			scheduleEvents[i].day = day;
+			scheduleEvents[i].minuteOfDay = minuteOfDay;
+			scheduleEvents[i].event = event;
+			return LS_OK;
+		}
+	}
+
+	return LS_TOO_MANY_EVENTS;
 }
 
-void LightScheduler_ScheduleTurnOn(int id, Day day, int minuteOfDay) {
-	setScheduleEvent(id, day, minuteOfDay, TURN_ON);
+LightScheduleResult LightScheduler_ScheduleTurnOn(int id, Day day,
+		int minuteOfDay) {
+	return setScheduleEvent(id, day, minuteOfDay, TURN_ON);
 }
 
 void LightScheduler_ScheduleTurnOff(int id, Day day, int minuteOfDay) {
 	setScheduleEvent(id, day, minuteOfDay, TURN_OFF);
+}
+
+void LightScheduler_ScheduleRemove(int id, Day day, int minuteOfDay){
+	int i;
+		for (i = 0; i < MAX_EVENTS; i++) {
+			if (scheduleEvents[i].id != UNUSED) {
+				if(scheduleEvents[i].id == id && scheduleEvents[i].day == day && scheduleEvents[i].minuteOfDay == minuteOfDay)
+				scheduleEvents[i].id = UNUSED;
+				return;
+			}
+		}
 }

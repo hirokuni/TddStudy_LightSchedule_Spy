@@ -23,8 +23,12 @@ TEST_GROUP(LightSchedule) {
 	}
 
 	void checkLightState(int id, int level) {
-		LONGS_EQUAL(id, LightControllerSpy_GetLastID());
-		LONGS_EQUAL(level, LightControllerSpy_GetLastState());
+		if (id == LIGHT_ID_UNKNOWN) {
+			LONGS_EQUAL(id, LightControllerSpy_GetLastID());
+			LONGS_EQUAL(level, LightControllerSpy_GetLastState());
+		} else {
+			LONGS_EQUAL(level, LightControllerSpy_GetLightState(id));
+		}
 	}
 };
 
@@ -76,7 +80,7 @@ TEST_GROUP(LightSchedule) {
  * 　ここでは新しいフェイクを駆動するためのテストを書くのだが、新しいフェイクが動作することを確かめるためではなく、
  * むしろフェイクの振る舞いをドキュメント化するためだ。
  */TEST(LightSchedule, Create) {
-	 checkLightState(LIGHT_ID_UNKNOWN, LIGHT_STATE_UNKNOWN);
+	checkLightState(LIGHT_ID_UNKNOWN, LIGHT_STATE_UNKNOWN);
 }
 
 TEST(LightSchedule, RememberTheLastLightIdControlled) {
@@ -86,9 +90,9 @@ TEST(LightSchedule, RememberTheLastLightIdControlled) {
 
 //Scheduleイベントが発生しないケースからテストを書く
 TEST(LightSchedule, NoScheduleNothingHappens) {
-	setTimeTo(MONDAY,100);
+	setTimeTo(MONDAY, 100);
 	LightScheduler_Wakeup();
-	checkLightState(LIGHT_ID_UNKNOWN,LIGHT_STATE_UNKNOWN);
+	checkLightState(LIGHT_ID_UNKNOWN, LIGHT_STATE_UNKNOWN);
 }
 
 //次にScheduleイベントが発生するケースを書く
@@ -101,7 +105,7 @@ TEST(LightSchedule, ScheduleOnEverydatyNotTimeYet) {
 	//毎日(Everyday)、1200分目(午後8時）にIDが３のライトをオンにするようスケジュールする。
 	LightScheduler_ScheduleTurnOn(3, EVERYDAY, 1200);
 	//次に時計をコントロールして、月曜日の午後7時59分(1199分目)にセットするFakeTimeServiceに指示している。
-	setTimeTo(MONDAY,1199);
+	setTimeTo(MONDAY, 1199);
 
 	/*
 	 * Execute
@@ -114,103 +118,188 @@ TEST(LightSchedule, ScheduleOnEverydatyNotTimeYet) {
 	 * Verify
 	 */
 	//MONDAY, 1199分目はスケジュールされた期限ではないため、LightControllerの関数は呼び出されないはず(xxx_UNKNOWNが返却されるはず）。
-	checkLightState(LIGHT_ID_UNKNOWN,LIGHT_STATE_UNKNOWN);
+	checkLightState(LIGHT_ID_UNKNOWN, LIGHT_STATE_UNKNOWN);
 }
 
 TEST(LightSchedule, ScheduleOnEverydayItsTime) {
 	LightScheduler_ScheduleTurnOn(3, EVERYDAY, 1200);
 
-	setTimeTo(MONDAY,1200);
+	setTimeTo(MONDAY, 1200);
 
 	LightScheduler_Wakeup();
 
-	checkLightState(3,LIGHT_ON);
+	checkLightState(3, LIGHT_ON);
 }
 
 TEST(LightSchedule, ScheduleOffEventdayItsTime) {
 	LightScheduler_ScheduleTurnOff(3, EVERYDAY, 1200);
 
-	setTimeTo(MONDAY,1200);
+	setTimeTo(MONDAY, 1200);
 
 	LightScheduler_Wakeup();
 
-	checkLightState(3,LIGHT_OFF);
+	checkLightState(3, LIGHT_OFF);
 }
 
 TEST(LightSchedule, ScheduleTuesdayButItsMonday) {
 	LightScheduler_ScheduleTurnOff(3, TUESDAY, 1200);
 
-	setTimeTo(MONDAY,1200);
+	setTimeTo(MONDAY, 1200);
 
 	LightScheduler_Wakeup();
 
-	checkLightState(LIGHT_ID_UNKNOWN,LIGHT_STATE_UNKNOWN);
+	checkLightState(LIGHT_ID_UNKNOWN, LIGHT_STATE_UNKNOWN);
 }
 
 TEST(LightSchedule, ScheduleTuesdayAndItsThuesday) {
 	LightScheduler_ScheduleTurnOn(3, TUESDAY, 1200);
 
-	setTimeTo(TUESDAY,1200);
+	setTimeTo(TUESDAY, 1200);
 
 	LightScheduler_Wakeup();
 
-	checkLightState(3,LIGHT_ON);
+	checkLightState(3, LIGHT_ON);
 }
 
 TEST(LightSchedule, ScheduleWeekEndItsFriday) {
 	LightScheduler_ScheduleTurnOn(3, WEEKEND, 1200);
 
-	setTimeTo(FRIDAY,1200);
+	setTimeTo(FRIDAY, 1200);
 
 	LightScheduler_Wakeup();
 
-	checkLightState(LIGHT_ID_UNKNOWN,LIGHT_STATE_UNKNOWN);
+	checkLightState(LIGHT_ID_UNKNOWN, LIGHT_STATE_UNKNOWN);
 }
 
 TEST(LightSchedule, ScheduleWeekEndItsSaturday) {
 	LightScheduler_ScheduleTurnOn(3, WEEKEND, 1200);
 
-	setTimeTo(SATURDAY,1200);
+	setTimeTo(SATURDAY, 1200);
 
 	LightScheduler_Wakeup();
 
-	checkLightState(3,LIGHT_ON);
+	checkLightState(3, LIGHT_ON);
 }
 
 TEST(LightSchedule, ScheduleWeekEndItsSunday) {
 	LightScheduler_ScheduleTurnOn(3, WEEKEND, 1200);
 
-	setTimeTo(SUNDAY,1200);
+	setTimeTo(SUNDAY, 1200);
 
 	LightScheduler_Wakeup();
 
-	checkLightState(3,LIGHT_ON);
+	checkLightState(3, LIGHT_ON);
 }
 
 TEST(LightSchedule, ScheduleWeekEndItsMonday) {
 	LightScheduler_ScheduleTurnOn(3, WEEKEND, 1200);
 
-	setTimeTo(MONDAY,1200);
+	setTimeTo(MONDAY, 1200);
 
 	LightScheduler_Wakeup();
 
-	checkLightState(LIGHT_ID_UNKNOWN,LIGHT_STATE_UNKNOWN);
+	checkLightState(LIGHT_ID_UNKNOWN, LIGHT_STATE_UNKNOWN);
 }
 
 /*
  * 初期化とクリーンナップのテストは、他のLightSchedulerの手嘘とはかなり違っているので
  * 新しくTEST_GROUPを追加した。
- */
-TEST_GROUP(LightSchedulerInitAndCleanup)
-{
+ */TEST_GROUP(LightSchedulerInitAndCleanup) {
 
 };
 
-TEST(LightSchedulerInitAndCleanup, CreateStartsOneMinuteAlarm)
-{
+TEST(LightSchedulerInitAndCleanup, CreateStartsOneMinuteAlarm) {
 	LightSchedule_Create();
-	POINTERS_EQUAL((void *)LightScheduler_Wakeup,
-			(void *)FakeTimeService_GetAlarmCallback());
-	LONGS_EQUAL(60,FakeTimeService_GetAlarmPeriod());
+	POINTERS_EQUAL((void * )LightScheduler_Wakeup,
+			(void * )FakeTimeService_GetAlarmCallback());
+	LONGS_EQUAL(60, FakeTimeService_GetAlarmPeriod());
 	LightSchedule_Destroy();
+}
+
+/*
+ * 複数Lightの制御
+ */TEST_GROUP(LightControllerSpy) {
+
+	void setup() {
+		LightSchedule_Create();
+		LightController_Create();
+	}
+
+	void teardown() {
+		LightSchedule_Destroy();
+		LightController_Destroy();
+	}
+
+	void checkLightState(int id, int level) {
+		if (id == LIGHT_ID_UNKNOWN) {
+			LONGS_EQUAL(id, LightControllerSpy_GetLastID());
+			LONGS_EQUAL(level, LightControllerSpy_GetLastState());
+		} else {
+			LONGS_EQUAL(level, LightControllerSpy_GetLightState(id));
+		}
+	}
+};
+
+TEST(LightControllerSpy, RememberAllLightStates) {
+	LightController_On(0);
+	LightController_Off(31);
+	checkLightState(0, LIGHT_ON);
+	checkLightState(31, LIGHT_OFF);
+}
+
+TEST(LightControllerSpy, ScheduleTwoEventsAtTheSameTime) {
+	LightScheduler_ScheduleTurnOn(3, SUNDAY, 1200);
+	LightScheduler_ScheduleTurnOn(12, SUNDAY, 1200);
+
+	FakeTimeService_SetMinute(1200);
+	FakeTimeService_SetDay(SUNDAY);
+
+	LightScheduler_Wakeup();
+
+	checkLightState(3, LIGHT_ON);
+	checkLightState(12, LIGHT_ON);
+}
+
+TEST(LightControllerSpy, RejectsTooManyEvents) {
+	int i;
+	for (i = 0; i < 128; i++)
+		LONGS_EQUAL(LS_OK, LightScheduler_ScheduleTurnOn(6, MONDAY, 600 + i));
+
+	LONGS_EQUAL(LS_TOO_MANY_EVENTS,
+			LightScheduler_ScheduleTurnOn(6, MONDAY, 600 + i));
+}
+
+TEST(LightControllerSpy, RemoveRecyclesScheduleSlot) {
+	int i;
+	for (i = 0; i < 128; i++)
+		LONGS_EQUAL(LS_OK, LightScheduler_ScheduleTurnOn(6, MONDAY, 600 + i));
+
+	LightScheduler_ScheduleRemove(6, MONDAY, 600);
+	LONGS_EQUAL(LS_OK,
+			LightScheduler_ScheduleTurnOn(13, MONDAY, 600 + i));
+}
+
+TEST(LightSchedule, RemoveMultipleScheduledEvent) {
+	LightScheduler_ScheduleTurnOn(6, MONDAY, 600);
+	LightScheduler_ScheduleTurnOn(7, MONDAY, 600);
+	LightScheduler_ScheduleRemove(6, MONDAY, 600);
+
+	setTimeTo(MONDAY, 600);
+
+	LightScheduler_Wakeup();
+
+	checkLightState(6, LIGHT_STATE_UNKNOWN);
+	checkLightState(7, LIGHT_ON);
+
+}
+
+TEST(LightSchedule, AcceptsValidLightIds) {
+	LONGS_EQUAL(LS_OK,LightScheduler_ScheduleTurnOn(0, MONDAY, 600));
+	LONGS_EQUAL(LS_OK,LightScheduler_ScheduleTurnOn(15, MONDAY, 600));
+	LONGS_EQUAL(LS_OK,LightScheduler_ScheduleTurnOn(31, MONDAY, 600));
+}
+
+TEST(LightSchedule, RejectsInvalidLightIds) {
+	LONGS_EQUAL(LS_ID_OUT_OF_BOUNDS,LightScheduler_ScheduleTurnOn(-1, MONDAY, 600));
+	LONGS_EQUAL(LS_ID_OUT_OF_BOUNDS,LightScheduler_ScheduleTurnOn(32, MONDAY, 600));
 }

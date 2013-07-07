@@ -23,5 +23,7 @@ enum
 
 int LightControllerSpy_GetLastID(void);
 int LightControllerSpy_GetLastState(void);
+int LightControllerSpy_GetLightState(int id);
+
 
 #endif /* LIGHTCONTROLLERSPY_H_ */
