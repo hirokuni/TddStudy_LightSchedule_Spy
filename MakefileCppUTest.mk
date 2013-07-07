@@ -26,6 +26,7 @@ CPPUTEST_LIB_DIR = ./lib
 
 SRC_FILES =\
 	src/LightSchedule/LightSchedule.c \
+	src/RandomMinuteGenerator.c \
 	
 #SRC_DIRS:=$(shell find ./ -name "*.c" -a ! -name "IO.c")
 

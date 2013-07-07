@@ -3,6 +3,7 @@ extern "C" {
 #include "LightControllerSpy.h"
 #include "TimeService.h"
 #include "HomeAutomation/FakeTimeService.h"
+#include "RandomMinuteGenerator.h"
 }
 
 #include "CppUTest/TestHarness.h"
@@ -216,6 +217,8 @@ TEST(LightSchedulerInitAndCleanup, CreateStartsOneMinuteAlarm) {
 	LightSchedule_Destroy();
 }
 
+
+
 /*
  * 複数Lightの制御
  */TEST_GROUP(LightControllerSpy) {
@@ -303,3 +306,48 @@ TEST(LightSchedule, RejectsInvalidLightIds) {
 	LONGS_EQUAL(LS_ID_OUT_OF_BOUNDS,LightScheduler_ScheduleTurnOn(-1, MONDAY, 600));
 	LONGS_EQUAL(LS_ID_OUT_OF_BOUNDS,LightScheduler_ScheduleTurnOn(32, MONDAY, 600));
 }
+
+enum {BOUND=30};
+
+TEST_GROUP(RandomMinute) {
+	int minute;
+
+	void setup() {
+		RandomMinuteGenerator_Create(BOUND);
+		//乱数が発生してテストが失敗するのを防ぐため１で初期化
+		srand(1);
+	}
+
+	void AssertMinuteIsInRange(){
+		if(minute < -BOUND || minute > BOUND)
+		{
+			printf("bad minute value: %d \n",minute);
+			FAIL("Minute out of range");
+		}
+	}
+};
+
+TEST(RandomMinute, GetIsInRange){
+	for(int i = 0; i < 100; i++){
+		minute = RandomMinuteGenerator_Get();
+	    AssertMinuteIsInRange();
+	}
+}
+
+//300回まわして、-30 ~ 30まで万遍なくrandom値が生成されていることを確認
+TEST(RandomMinute, AllValuesPossible){
+	int hit[2*BOUND + 1];
+	memset(hit,0,sizeof(hit));
+	int i;
+	for(i=0;i<300;i++)
+	{
+		minute = RandomMinuteGenerator_Get();
+		AssertMinuteIsInRange();
+		hit[minute+BOUND]++;
+	}
+	for(i=0; i<2*BOUND+1;i++){
+		CHECK(hit[i] > 0);
+	}
+}
+
+
